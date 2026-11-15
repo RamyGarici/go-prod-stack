@@ -1,0 +1,15 @@
+[Unit]
+Description=Go
+After=network.target
+[Service]
+User=goserver
+Group=goserver
+WorkingDirectory = /home/mi/opt/go-prod-stack
+ExecStart=/home/mi/opt/go-prod-stack/go-prod-stack
+Restart=always
+RestartSec=3
+NoNewPrivileges=true
+ProtectSystem=strict
+ProtectHome=read-only
+[Install]
+WantedBy=multi-user.target
