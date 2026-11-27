@@ -1,10 +1,14 @@
 package main
 
 import (
+	"context"
+	"errors"
+	"flag"
 	"log"
 	"net/http"
-	"flag"
 	"os"
+	"os/signal"
+	"syscall"
 	"time"
 )
 
@@ -20,7 +24,7 @@ func main() {
 		resp.Body.Close()
 		os.Exit(0)
 	}
-	
+
 	s := http.NewServeMux()
 	s.HandleFunc("GET /health", func(w http.ResponseWriter, req *http.Request) {
 		w.Header().Set("Content-type", "application/json")
@@ -30,9 +34,20 @@ func main() {
 	})
 	
 	log.Println("Listening...")
-	if err := http.ListenAndServe(":8080", s); err != nil {
-		log.Fatal(err)
-	}
+	srv:= &http.Server{Addr: ":8080", Handler: s}
+	go func ()  {
+		if err:= srv.ListenAndServe(); err!=nil && !errors.Is(err,http.ErrServerClosed){
+			log.Fatal(err)
+		}
+	}()
+
+	ctx, stop := signal.NotifyContext(context.Background(),os.Interrupt,syscall.SIGTERM)
+	defer stop()
+	<-ctx.Done()
+	shutdownCtx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	defer cancel()
+	srv.Shutdown(shutdownCtx)
+
     
 	
 
